@@ -2,15 +2,15 @@
 pragma solidity ^0.8.19;
 
 import "./DeployHelpers.s.sol";
-import { DeployYourContract } from "./DeployYourContract.s.sol";
+import {DeployTokenDistributor} from "./DeployTokenDistributor.s.sol";
+import {DeployMockERC20} from "./DeployMockERC20.s.sol";
 
 contract DeployScript is ScaffoldETHDeploy {
-  function run() external {
-    DeployYourContract deployYourContract = new DeployYourContract();
-    deployYourContract.run();
+    function run() external {
+        DeployMockERC20 deployMockERC20 = new DeployMockERC20();
+        deployMockERC20.run();
 
-    // deploy more contracts here
-    // DeployMyContract deployMyContract = new DeployMyContract();
-    // deployMyContract.run();
-  }
+        DeployTokenDistributor deployTokenDistributor = new DeployTokenDistributor();
+        deployTokenDistributor.run();
+    }
 }
