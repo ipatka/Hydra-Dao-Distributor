@@ -21,14 +21,15 @@ contract TokenDistributor is ReentrancyGuard {
         address indexed sender,
         address payable[] recipients,
         uint256[] amounts,
-        IERC20 token
+        IERC20 indexed token,
+        address payable[] excludedAddresses,
+        string excludedAddressesMessage
     );
 
     //*********************************************************************//
     // --------------------------- custom errors ------------------------- //
     //*********************************************************************//
     error INVALID_INPUT();
-    error INSUFFICIENT_RECIPIENT_COUNT();
     error INVALID_RECIPIENT();
     error INSUFFICIENT_SPLIT_AMOUNT();
     error ONLY_OWNER();
@@ -75,10 +76,19 @@ contract TokenDistributor is ReentrancyGuard {
     function splitERC20(
         IERC20 token,
         address payable[] calldata recipients,
-        uint256[] calldata amounts
+        uint256[] calldata amounts,
+        address payable[] calldata excludedAddresses,
+        string calldata excludedAddressesMessage
     ) external nonReentrant checkForDuplicates(recipients) {
         _transferTokensFromSenderToRecipients(token, recipients, amounts);
-        emit Erc20Split(msg.sender, recipients, amounts, token);
+        emit Erc20Split(
+            msg.sender,
+            recipients,
+            amounts,
+            token,
+            excludedAddresses,
+            excludedAddressesMessage
+        );
     }
 
     /**
@@ -95,7 +105,6 @@ contract TokenDistributor is ReentrancyGuard {
         uint256 length = recipients.length;
 
         if (length != amounts.length) revert INVALID_INPUT();
-        if (length > 25 || length < 2) revert INSUFFICIENT_RECIPIENT_COUNT();
 
         for (uint256 i = 0; i < length; ) {
             if (recipients[i] == address(0)) revert INVALID_RECIPIENT();
