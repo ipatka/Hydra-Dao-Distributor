@@ -55,7 +55,7 @@ const useSpliiterHistory = () => {
       try {
         const events = erc20Splits.data?.filter(obj => obj.args.sender === address);
         if (events) {
-          const eventsWithTokenSymbol = await Promise.all(
+          const eventsWithTokenData = await Promise.all(
             events.map(async event => {
               const symbol = await getTokenSymbol(event.args.token);
               const decimals = await getTokenDecimals(event.args.token);
@@ -66,7 +66,7 @@ const useSpliiterHistory = () => {
               };
             }),
           );
-          setErc20SplitEvents(eventsWithTokenSymbol);
+          setErc20SplitEvents(eventsWithTokenData);
         }
       } catch (error) {
         console.error("Error fetching events:", error);
