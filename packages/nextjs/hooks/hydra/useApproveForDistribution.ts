@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { readContract, simulateContract, writeContract } from "@wagmi/core";
-import { formatEther, parseUnits } from "viem";
+import { formatEther, formatUnits, parseUnits } from "viem";
 import { erc20Abi } from "viem";
 import { useAccount } from "wagmi";
 import { useTransactor } from "~~/hooks/scaffold-eth";
@@ -96,16 +96,26 @@ export const useApproveForDistribution = ({
       if (tokenAddress && tokenAddress != "" && address && !isTransferLoading) {
         setIsLoading(true);
         setBalance(undefined);
+        setTokenDecimals(18);
+
         try {
-          const data = await readContract(wagmiConfig, {
+          const decimals = await readContract(wagmiConfig, {
+            address: tokenAddress,
+            abi: erc20Abi,
+            functionName: "decimals",
+          });
+          setTokenDecimals(decimals);
+
+          const balance = await readContract(wagmiConfig, {
             address: tokenAddress,
             abi: erc20Abi,
             functionName: "balanceOf",
             args: [address],
           });
-          setBalance(parseFloat(formatEther(data)));
+          setBalance(parseFloat(formatUnits(balance, decimals)));
         } catch (error) {
           setBalance(undefined);
+          setTokenDecimals(18);
         }
       }
     })();
@@ -117,7 +127,6 @@ export const useApproveForDistribution = ({
       if (tokenAddress && tokenAddress != "" && address && !isTransferLoading) {
         setTokenSymbol("");
         setTokenName("");
-        setTokenDecimals(18);
         setIsLoading(true);
         try {
           const symbol = await readContract(wagmiConfig, {
@@ -133,17 +142,9 @@ export const useApproveForDistribution = ({
             functionName: "name",
           });
           setTokenName(name);
-
-          const decimals = await readContract(wagmiConfig, {
-            address: tokenAddress,
-            abi: erc20Abi,
-            functionName: "decimals",
-          });
-          setTokenDecimals(decimals);
         } catch (error) {
           setTokenSymbol("");
           setTokenName("");
-          setTokenDecimals(18);
         }
       }
       setIsLoading(false);
