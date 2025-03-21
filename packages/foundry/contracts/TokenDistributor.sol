@@ -3,6 +3,7 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title Hydra Dao Token Distributor
@@ -11,9 +12,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
  * own risk and discretion.
  */
 
-contract TokenDistributor is ReentrancyGuard {
+contract TokenDistributor is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
-    address immutable _owner;
 
     // Events
 
@@ -32,29 +32,17 @@ contract TokenDistributor is ReentrancyGuard {
     error INVALID_INPUT();
     error INVALID_RECIPIENT();
     error INSUFFICIENT_SPLIT_AMOUNT();
-    error ONLY_OWNER();
     error TRANSFER_FAILED();
     error DUPLICATE_RECIPIENT();
 
     /**
-     * @notice The constructor sets the owner of the contract
+     * @notice The constructor initializes the Ownable contract
      */
-    constructor() {
-        _owner = msg.sender;
-    }
-
-    /**
-     * @notice A modifier to ensure that only the owner can perform certain actions
-     */
-    modifier onlyOwner() {
-        if (msg.sender != _owner) revert ONLY_OWNER();
-        _;
-    }
+    constructor() Ownable(msg.sender) {}
 
     /**
      * @notice A modifier to check for duplicates and revert before execute a function
      */
-
     modifier checkForDuplicates(address payable[] calldata recipients) {
         uint256 length = recipients.length;
         for (uint256 i = 0; i < length; i++) {
@@ -110,8 +98,7 @@ contract TokenDistributor is ReentrancyGuard {
             if (recipients[i] == address(0)) revert INVALID_RECIPIENT();
             if (amounts[i] == 0) revert INSUFFICIENT_SPLIT_AMOUNT();
 
-            SafeERC20.safeTransferFrom(
-                erc20Token,
+            erc20Token.safeTransferFrom(
                 msg.sender,
                 recipients[i],
                 amounts[i]
@@ -128,13 +115,13 @@ contract TokenDistributor is ReentrancyGuard {
      */
     function withdraw(IERC20 token) external onlyOwner {
         if (address(token) == address(0)) {
-            (bool success, ) = _owner.call{
+            (bool success, ) = owner().call{
                 value: address(this).balance,
                 gas: 20000
             }("");
             if (!success) revert TRANSFER_FAILED();
         } else {
-            token.transfer(_owner, token.balanceOf(address(this)));
+            token.safeTransfer(owner(), token.balanceOf(address(this)));
         }
     }
 
