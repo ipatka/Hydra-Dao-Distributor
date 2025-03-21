@@ -14,15 +14,12 @@ const useHydraHolders = () => {
     isLoading: isLoadingEvents,
     error: errorReadingEvents,
   } = useScaffoldEventHistory({
-    contractName: "ERC20Mock",
+    contractName: "HYDRA",
     eventName: "Transfer",
-    fromBlock: 7951824n,
+    // fromBlock: 7951824n,
+    fromBlock: 16780015n,
     // fromBlock: 0n,
     watch: true,
-    // filters: { greetingSetter: "0x9eB2C4866aAe575bC88d00DE5061d5063a1bb3aF" },
-    // blockData: true,
-    // transactionData: true,
-    // receiptData: true,
   });
 
   useEffect(() => {

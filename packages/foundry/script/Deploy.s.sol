@@ -8,8 +8,8 @@ import {DeploySecondaryERC20Mock} from "./DeploySecondaryERC20Mock.s.sol";
 
 contract DeployScript is ScaffoldETHDeploy {
     function run() external {
-        DeployERC20Mock deployERC20Mock = new DeployERC20Mock();
-        deployERC20Mock.run();
+        // DeployERC20Mock deployERC20Mock = new DeployERC20Mock();
+        // deployERC20Mock.run();
 
         DeployTokenDistributor deployTokenDistributor = new DeployTokenDistributor();
         deployTokenDistributor.run();

@@ -17,10 +17,11 @@ const Holders = () => {
     isLoading: isLoadingEvents,
     error: errorReadingEvents,
   } = useScaffoldEventHistory({
-    contractName: "ERC20Mock",
+    contractName: "HYDRA",
     eventName: "Transfer",
     // fromBlock: 0n,
-    fromBlock: 7951824n,
+    // fromBlock: 7951824n,
+    fromBlock: 16780015n,
     watch: true,
   });
 
