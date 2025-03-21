@@ -102,7 +102,7 @@ export const Header = () => {
         </div>
         <Link href="/" passHref className="hidden lg:flex items-center gap-2 ml-4 mr-6 shrink-0">
           <div className="flex relative w-10 h-10">
-            <Image alt="Hydra DAO logo" className="cursor-pointer" fill src="/hydralogo.jpeg" />
+            <Image alt="Hydra DAO logo" className="cursor-pointer" fill src="/hydralogo.svg" />
           </div>
           <div className="flex flex-col">
             <span className="font-bold leading-tight">Hydra DAO</span>
