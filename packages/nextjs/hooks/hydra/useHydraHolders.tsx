@@ -16,7 +16,8 @@ const useHydraHolders = () => {
   } = useScaffoldEventHistory({
     contractName: "ERC20Mock",
     eventName: "Transfer",
-    fromBlock: 0n,
+    fromBlock: 7951824n,
+    // fromBlock: 0n,
     watch: true,
     // filters: { greetingSetter: "0x9eB2C4866aAe575bC88d00DE5061d5063a1bb3aF" },
     // blockData: true,

@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   31337: {
     ERC20Mock: {
-      address: "0xfc8d2a49bfa827605ed7dc01317fa9d9cc1bf3bb",
+      address: "0x700b6a60ce7eaaea56f065753d8dcb9653dbad35",
       abi: [
         {
           type: "constructor",
@@ -421,7 +421,7 @@ const deployedContracts = {
       },
     },
     TokenDistributor: {
-      address: "0xca4a123095419d9387f9f49d618b33cbaf46b626",
+      address: "0x19a1c09fe3399c4daaa2c98b936a8e460fc5eaa4",
       abi: [
         {
           type: "constructor",
@@ -431,6 +431,26 @@ const deployedContracts = {
         {
           type: "receive",
           stateMutability: "payable",
+        },
+        {
+          type: "function",
+          name: "owner",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "renounceOwnership",
+          inputs: [],
+          outputs: [],
+          stateMutability: "nonpayable",
         },
         {
           type: "function",
@@ -460,6 +480,19 @@ const deployedContracts = {
               name: "excludedAddressesMessage",
               type: "string",
               internalType: "string",
+            },
+          ],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "transferOwnership",
+          inputs: [
+            {
+              name: "newOwner",
+              type: "address",
+              internalType: "address",
             },
           ],
           outputs: [],
@@ -522,6 +555,25 @@ const deployedContracts = {
           anonymous: false,
         },
         {
+          type: "event",
+          name: "OwnershipTransferred",
+          inputs: [
+            {
+              name: "previousOwner",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "newOwner",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+          ],
+          anonymous: false,
+        },
+        {
           type: "error",
           name: "DUPLICATE_RECIPIENT",
           inputs: [],
@@ -543,8 +595,25 @@ const deployedContracts = {
         },
         {
           type: "error",
-          name: "ONLY_OWNER",
-          inputs: [],
+          name: "OwnableInvalidOwner",
+          inputs: [
+            {
+              name: "owner",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+        },
+        {
+          type: "error",
+          name: "OwnableUnauthorizedAccount",
+          inputs: [
+            {
+              name: "account",
+              type: "address",
+              internalType: "address",
+            },
+          ],
         },
         {
           type: "error",
@@ -568,10 +637,16 @@ const deployedContracts = {
           inputs: [],
         },
       ],
-      inheritedFunctions: {},
+      inheritedFunctions: {
+        owner: "lib/openzeppelin-contracts/contracts/access/Ownable.sol",
+        renounceOwnership:
+          "lib/openzeppelin-contracts/contracts/access/Ownable.sol",
+        transferOwnership:
+          "lib/openzeppelin-contracts/contracts/access/Ownable.sol",
+      },
     },
     SecondaryERC20Mock: {
-      address: "0xe7b2d9331728219853ed5fb5f294350ea680c5c0",
+      address: "0x49b8e3b089d4ebf9f37b1da9b839ec013c2cd8c9",
       abi: [
         {
           type: "constructor",
@@ -1414,6 +1489,26 @@ const deployedContracts = {
         },
         {
           type: "function",
+          name: "owner",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "renounceOwnership",
+          inputs: [],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
           name: "splitERC20",
           inputs: [
             {
@@ -1440,6 +1535,19 @@ const deployedContracts = {
               name: "excludedAddressesMessage",
               type: "string",
               internalType: "string",
+            },
+          ],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "transferOwnership",
+          inputs: [
+            {
+              name: "newOwner",
+              type: "address",
+              internalType: "address",
             },
           ],
           outputs: [],
@@ -1502,6 +1610,25 @@ const deployedContracts = {
           anonymous: false,
         },
         {
+          type: "event",
+          name: "OwnershipTransferred",
+          inputs: [
+            {
+              name: "previousOwner",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "newOwner",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+          ],
+          anonymous: false,
+        },
+        {
           type: "error",
           name: "DUPLICATE_RECIPIENT",
           inputs: [],
@@ -1523,8 +1650,25 @@ const deployedContracts = {
         },
         {
           type: "error",
-          name: "ONLY_OWNER",
-          inputs: [],
+          name: "OwnableInvalidOwner",
+          inputs: [
+            {
+              name: "owner",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+        },
+        {
+          type: "error",
+          name: "OwnableUnauthorizedAccount",
+          inputs: [
+            {
+              name: "account",
+              type: "address",
+              internalType: "address",
+            },
+          ],
         },
         {
           type: "error",
@@ -1548,7 +1692,13 @@ const deployedContracts = {
           inputs: [],
         },
       ],
-      inheritedFunctions: {},
+      inheritedFunctions: {
+        owner: "lib/openzeppelin-contracts/contracts/access/Ownable.sol",
+        renounceOwnership:
+          "lib/openzeppelin-contracts/contracts/access/Ownable.sol",
+        transferOwnership:
+          "lib/openzeppelin-contracts/contracts/access/Ownable.sol",
+      },
     },
     SecondaryERC20Mock: {
       address: "0xdf099971129c6788ab10199df9fe9b53469dd51c",
@@ -1966,8 +2116,233 @@ const deployedContracts = {
     },
   },
   11155111: {
-    ERC20Mock: {
-      address: "0xc8c56ede5fbfda96f3f49ade96642512598864f7",
+    TokenDistributor: {
+      address: "0xc2c303934aee0f42e1cb71487852474487e98ba8",
+      abi: [
+        {
+          type: "constructor",
+          inputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "receive",
+          stateMutability: "payable",
+        },
+        {
+          type: "function",
+          name: "owner",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "renounceOwnership",
+          inputs: [],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "splitERC20",
+          inputs: [
+            {
+              name: "token",
+              type: "address",
+              internalType: "contract IERC20",
+            },
+            {
+              name: "recipients",
+              type: "address[]",
+              internalType: "address payable[]",
+            },
+            {
+              name: "amounts",
+              type: "uint256[]",
+              internalType: "uint256[]",
+            },
+            {
+              name: "excludedAddresses",
+              type: "address[]",
+              internalType: "address payable[]",
+            },
+            {
+              name: "excludedAddressesMessage",
+              type: "string",
+              internalType: "string",
+            },
+          ],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "transferOwnership",
+          inputs: [
+            {
+              name: "newOwner",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "withdraw",
+          inputs: [
+            {
+              name: "token",
+              type: "address",
+              internalType: "contract IERC20",
+            },
+          ],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "event",
+          name: "Erc20Split",
+          inputs: [
+            {
+              name: "sender",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "recipients",
+              type: "address[]",
+              indexed: false,
+              internalType: "address payable[]",
+            },
+            {
+              name: "amounts",
+              type: "uint256[]",
+              indexed: false,
+              internalType: "uint256[]",
+            },
+            {
+              name: "token",
+              type: "address",
+              indexed: true,
+              internalType: "contract IERC20",
+            },
+            {
+              name: "excludedAddresses",
+              type: "address[]",
+              indexed: false,
+              internalType: "address payable[]",
+            },
+            {
+              name: "excludedAddressesMessage",
+              type: "string",
+              indexed: false,
+              internalType: "string",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "OwnershipTransferred",
+          inputs: [
+            {
+              name: "previousOwner",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "newOwner",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "error",
+          name: "DUPLICATE_RECIPIENT",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "INSUFFICIENT_SPLIT_AMOUNT",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "INVALID_INPUT",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "INVALID_RECIPIENT",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "OwnableInvalidOwner",
+          inputs: [
+            {
+              name: "owner",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+        },
+        {
+          type: "error",
+          name: "OwnableUnauthorizedAccount",
+          inputs: [
+            {
+              name: "account",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+        },
+        {
+          type: "error",
+          name: "ReentrancyGuardReentrantCall",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "SafeERC20FailedOperation",
+          inputs: [
+            {
+              name: "token",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+        },
+        {
+          type: "error",
+          name: "TRANSFER_FAILED",
+          inputs: [],
+        },
+      ],
+      inheritedFunctions: {
+        owner: "lib/openzeppelin-contracts/contracts/access/Ownable.sol",
+        renounceOwnership:
+          "lib/openzeppelin-contracts/contracts/access/Ownable.sol",
+        transferOwnership:
+          "lib/openzeppelin-contracts/contracts/access/Ownable.sol",
+      },
+    },
+    SecondaryERC20Mock: {
+      address: "0x01517625e4d319dee660cbd6da7aa5d035e54b95",
       abi: [
         {
           type: "constructor",
@@ -2379,156 +2754,6 @@ const deployedContracts = {
         transferFrom:
           "lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol",
       },
-    },
-    TokenDistributor: {
-      address: "0x6428459fa32ff337f922a61dd30dcd4a58e09a9d",
-      abi: [
-        {
-          type: "constructor",
-          inputs: [],
-          stateMutability: "nonpayable",
-        },
-        {
-          type: "receive",
-          stateMutability: "payable",
-        },
-        {
-          type: "function",
-          name: "splitERC20",
-          inputs: [
-            {
-              name: "token",
-              type: "address",
-              internalType: "contract IERC20",
-            },
-            {
-              name: "recipients",
-              type: "address[]",
-              internalType: "address payable[]",
-            },
-            {
-              name: "amounts",
-              type: "uint256[]",
-              internalType: "uint256[]",
-            },
-            {
-              name: "excludedAddresses",
-              type: "address[]",
-              internalType: "address payable[]",
-            },
-            {
-              name: "excludedAddressesMessage",
-              type: "string",
-              internalType: "string",
-            },
-          ],
-          outputs: [],
-          stateMutability: "nonpayable",
-        },
-        {
-          type: "function",
-          name: "withdraw",
-          inputs: [
-            {
-              name: "token",
-              type: "address",
-              internalType: "contract IERC20",
-            },
-          ],
-          outputs: [],
-          stateMutability: "nonpayable",
-        },
-        {
-          type: "event",
-          name: "Erc20Split",
-          inputs: [
-            {
-              name: "sender",
-              type: "address",
-              indexed: true,
-              internalType: "address",
-            },
-            {
-              name: "recipients",
-              type: "address[]",
-              indexed: false,
-              internalType: "address payable[]",
-            },
-            {
-              name: "amounts",
-              type: "uint256[]",
-              indexed: false,
-              internalType: "uint256[]",
-            },
-            {
-              name: "token",
-              type: "address",
-              indexed: true,
-              internalType: "contract IERC20",
-            },
-            {
-              name: "excludedAddresses",
-              type: "address[]",
-              indexed: false,
-              internalType: "address payable[]",
-            },
-            {
-              name: "excludedAddressesMessage",
-              type: "string",
-              indexed: false,
-              internalType: "string",
-            },
-          ],
-          anonymous: false,
-        },
-        {
-          type: "error",
-          name: "DUPLICATE_RECIPIENT",
-          inputs: [],
-        },
-        {
-          type: "error",
-          name: "INSUFFICIENT_SPLIT_AMOUNT",
-          inputs: [],
-        },
-        {
-          type: "error",
-          name: "INVALID_INPUT",
-          inputs: [],
-        },
-        {
-          type: "error",
-          name: "INVALID_RECIPIENT",
-          inputs: [],
-        },
-        {
-          type: "error",
-          name: "ONLY_OWNER",
-          inputs: [],
-        },
-        {
-          type: "error",
-          name: "ReentrancyGuardReentrantCall",
-          inputs: [],
-        },
-        {
-          type: "error",
-          name: "SafeERC20FailedOperation",
-          inputs: [
-            {
-              name: "token",
-              type: "address",
-              internalType: "address",
-            },
-          ],
-        },
-        {
-          type: "error",
-          name: "TRANSFER_FAILED",
-          inputs: [],
-        },
-      ],
-      inheritedFunctions: {},
     },
   },
 } as const;

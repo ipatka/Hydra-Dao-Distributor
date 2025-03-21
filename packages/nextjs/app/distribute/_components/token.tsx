@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { parseUnits } from "viem";
+import { parseUnits, formatUnits } from "viem";
 import { isAddress } from "viem";
 import { createPublicClient, http } from "viem";
 import { mainnet } from "viem/chains";
@@ -31,7 +31,7 @@ const TokenData = () => {
   const [amounts, setAmounts] = useState<string[]>();
   const [amountsInWei, setAmountsInWei] = useState<bigint[]>();
   const [holdersData, setHoldersData] = useState<TokenHolder[]>();
-  const [totatalHydraHeld, setTotalHydraHeld] = useState<string>();
+  const [totatalHydraHeld, setTotalHydraHeld] = useState<bigint>();
   const [excludedHoldersData, setExcludedHoldersData] = useState<TokenHolder[]>([]);
 
   const [excludedAddresses, setExcludedAddresses] = useState<string[]>([]);
@@ -56,9 +56,29 @@ const TokenData = () => {
   const onDistribution = async () => {
     try {
       if (!recipients || !amountsInWei) return;
+      
+      // Sort recipients and amounts together to maintain the correct mapping
+      const recipientsWithAmounts = recipients.map((address, index) => ({
+        address,
+        amount: amountsInWei[index]
+      }));
+      
+      recipientsWithAmounts.sort((a, b) => 
+        a.address.toLowerCase() < b.address.toLowerCase() ? -1 : 1
+      );
+      
+      // Extract sorted arrays
+      const sortedRecipients = recipientsWithAmounts.map(item => item.address);
+      const sortedAmounts = recipientsWithAmounts.map(item => item.amount);
+      
+      // Sort excluded addresses
+      const sortedExcludedAddresses = [...excludedAddresses].sort((a, b) => 
+        a.toLowerCase() < b.toLowerCase() ? -1 : 1
+      );
+      
       await writeYourContractAsync({
         functionName: "splitERC20",
-        args: [tokenContract, recipients, amountsInWei, excludedAddresses, excludedAddressesMessage],
+        args: [tokenContract, sortedRecipients, sortedAmounts, sortedExcludedAddresses, excludedAddressesMessage],
       });
     } catch (e) {
       console.error("Error distributing tokens:", e);
@@ -156,10 +176,15 @@ const TokenData = () => {
     if (holdersData) {
       const recipients = holdersData.map(holder => holder.address);
       setRecipients(recipients);
-      const totatalHydraHeld = holdersData.reduce((acc, holder) => {
-        return acc + Number(holder.balance);
-      }, 0);
-      setTotalHydraHeld(totatalHydraHeld.toString());
+      
+      // Calculate total HYDRA held as BigInt
+      const totalHydraHeldBigInt = holdersData.reduce((acc, holder) => {
+        // Convert each balance to BigInt
+        const holderBalanceBigInt = parseUnits(holder.balance.toString(), 18);
+        return acc + holderBalanceBigInt;
+      }, BigInt(0));
+      
+      setTotalHydraHeld(totalHydraHeldBigInt);
     }
   }, [holdersData]);
 
@@ -171,32 +196,45 @@ const TokenData = () => {
   }, [excludedHoldersData]);
 
   useEffect(() => {
-    if (distributionAmount && totatalHydraHeld && holdersData) {
-      const totalDistributionAmount = Number(distributionAmount);
-      let calculatedAmounts = holdersData.map(holder => {
-        return (Number(holder.balance) / Number(totatalHydraHeld)) * totalDistributionAmount;
-      });
-
-      const totalCalculatedAmount = calculatedAmounts.reduce((acc, amount) => acc + amount, 0);
-
-      if (totalCalculatedAmount > totalDistributionAmount) {
-        calculatedAmounts = calculatedAmounts.map(amount => (amount / totalCalculatedAmount) * totalDistributionAmount);
+    if (distributionAmount && totatalHydraHeld && holdersData && tokenDecimals !== undefined) {
+      try {
+        // Convert distribution amount to BigInt with proper decimals
+        const totalDistributionAmountBigInt = parseUnits(distributionAmount, tokenDecimals);
+        
+        // Calculate each holder's share with BigInt math
+        const calculatedAmountsBigInt = holdersData.map(holder => {
+          const holderBalanceBigInt = parseUnits(holder.balance.toString(), 18);
+          
+          // (holderBalance / totalHydraHeld) * totalDistributionAmount
+          // To avoid precision loss, multiply first then divide
+          return (holderBalanceBigInt * totalDistributionAmountBigInt) / totatalHydraHeld;
+        });
+        
+        // The rest of the BigInt calculations remain the same
+        const totalCalculatedBigInt = calculatedAmountsBigInt.reduce(
+          (acc, amount) => acc + amount, 
+          BigInt(0)
+        );
+        
+        const adjustedAmountsBigInt = calculatedAmountsBigInt.map(amount => {
+          if (totalCalculatedBigInt > totalDistributionAmountBigInt) {
+            return (amount * totalDistributionAmountBigInt) / totalCalculatedBigInt;
+          }
+          return amount;
+        });
+        
+        // Convert back to string representation for the UI
+        const amountsInDecimal = adjustedAmountsBigInt.map(amount => 
+          formatUnits(amount, tokenDecimals)
+        );
+        
+        setAmounts(amountsInDecimal);
+        setAmountsInWei(adjustedAmountsBigInt);
+      } catch (error) {
+        console.error("Error calculating distribution amounts:", error);
       }
-
-      setAmounts(calculatedAmounts.map(amount => amount.toString()));
     }
-  }, [totatalHydraHeld, distributionAmount, holdersData]);
-
-  useEffect(() => {
-    if (!amounts) return;
-
-    try {
-      const newAmountsInWei = amounts.map(amount => parseUnits(amount.toString(), tokenDecimals));
-      setAmountsInWei(newAmountsInWei);
-    } catch (error) {
-      console.error("Error parsing amounts to Wei:", error);
-    }
-  }, [amounts, tokenDecimals]);
+  }, [totatalHydraHeld, distributionAmount, holdersData, tokenDecimals]);
 
   return (
     <div className="mb-6 max-w-5xl mx-auto flex flex-col md:flex-row md:space-x-4 gap-4 text-xs ">
@@ -351,12 +389,14 @@ const TokenData = () => {
                       <th>
                         <Address size="xs" address={holder.address} />
                       </th>
-                      <th>{((Number(holder.balance) / Number(totatalHydraHeld)) * 100).toFixed(4)}%</th>
+                      <th>
+                        {totatalHydraHeld 
+                          ? (Number(formatUnits(parseUnits(holder.balance.toString(), 18) * BigInt(1000000) / totatalHydraHeld, 6)) * 100).toFixed(4)
+                          : 0}%
+                      </th>
                       {distributionAmount && (
                         <th>
-                          {((Number(holder.balance) / Number(totatalHydraHeld)) * Number(distributionAmount)).toFixed(
-                            4,
-                          )}
+                          {amounts && amounts[index] ? Number(amounts[index]).toFixed(4) : '0'}
                         </th>
                       )}
                       {index >= 0 && (

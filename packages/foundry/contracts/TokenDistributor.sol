@@ -41,24 +41,29 @@ contract TokenDistributor is ReentrancyGuard, Ownable {
     constructor() Ownable(msg.sender) {}
 
     /**
-     * @notice A modifier to check for duplicates and revert before execute a function
+     * @notice A function to check for duplicates in a sorted array of addresses
+     * @dev Requires the array to be sorted in ascending order
      */
-    modifier checkForDuplicates(address payable[] calldata recipients) {
+    function _checkForDuplicatesInSortedArray(address payable[] calldata recipients) internal pure {
         uint256 length = recipients.length;
-        for (uint256 i = 0; i < length; i++) {
-            for (uint256 j = i + 1; j < length; j++) {
-                if (recipients[i] == recipients[j]) {
-                    revert DUPLICATE_RECIPIENT();
-                }
+        
+        // For arrays with 0 or 1 elements, there can't be duplicates
+        if (length <= 1) return;
+        
+        // Check that the array is sorted and has no duplicates
+        for (uint256 i = 0; i < length - 1; i++) {
+            // Check if current address is greater than or equal to the next one
+            // If equal, it's a duplicate; if greater, the array isn't sorted
+            if (recipients[i] >= recipients[i + 1]) {
+                revert DUPLICATE_RECIPIENT();
             }
         }
-        _;
     }
 
     /**
      * @notice Splits the ERC20 tokens amongst the given recipients, according to the specified amounts
      * @param token The token of friendship to be shared amongst the recipients
-     * @param recipients The noble recipients of the ERC20 tokens
+     * @param recipients The noble recipients of the ERC20 tokens (must be sorted in ascending order)
      * @param amounts The amounts each recipient shall receive
      */
     function splitERC20(
@@ -67,7 +72,8 @@ contract TokenDistributor is ReentrancyGuard, Ownable {
         uint256[] calldata amounts,
         address payable[] calldata excludedAddresses,
         string calldata excludedAddressesMessage
-    ) external nonReentrant checkForDuplicates(recipients) {
+    ) external nonReentrant {
+        _checkForDuplicatesInSortedArray(recipients);
         _transferTokensFromSenderToRecipients(token, recipients, amounts);
         emit Erc20Split(
             msg.sender,

@@ -4,6 +4,7 @@ pragma solidity ^0.8.9;
 import "forge-std/Test.sol";
 import "../contracts/TokenDistributor.sol";
 import "../contracts/ERC20Mock.sol";
+import "../contracts/MaliciousToken.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract TokenDistributorTest is Test {
@@ -26,6 +27,11 @@ contract TokenDistributorTest is Test {
         user3 = makeAddr("user3");
         newOwner = makeAddr("newOwner");
         
+        // Ensure addresses are in ascending order for testing
+        if (user2 > user3) {
+            (user2, user3) = (user3, user2);
+        }
+        
         // Deploy contracts
         distributor = new TokenDistributor();
         token = new ERC20Mock("Test Token", "TEST", initialSupply, faucetAmount);
@@ -42,10 +48,10 @@ contract TokenDistributorTest is Test {
     
     // Test basic token distribution functionality
     function testSplitERC20() public {
-        // Setup recipients and amounts
+        // Setup recipients and amounts (sorted)
         address payable[] memory recipients = new address payable[](2);
-        recipients[0] = payable(user2);
-        recipients[1] = payable(user3);
+        recipients[0] = payable(user2); // Lower address
+        recipients[1] = payable(user3); // Higher address
         
         uint256[] memory amounts = new uint256[](2);
         amounts[0] = 1000 * 10**18;
@@ -74,7 +80,7 @@ contract TokenDistributorTest is Test {
     
     // Test with excluded addresses
     function testSplitERC20WithExcludedAddresses() public {
-        // Setup recipients and amounts
+        // Setup recipients and amounts (sorted)
         address payable[] memory recipients = new address payable[](2);
         recipients[0] = payable(user2);
         recipients[1] = payable(user3);
@@ -105,18 +111,18 @@ contract TokenDistributorTest is Test {
         assertEq(token.balanceOf(user3), 2000 * 10**18);
     }
     
-    // Test for duplicate recipients
+    // Test for duplicate recipients (now tests unsorted array)
     function testRevertOnDuplicateRecipients() public {
         // Setup recipients with duplicates
         address payable[] memory recipients = new address payable[](3);
         recipients[0] = payable(user2);
-        recipients[1] = payable(user3);
-        recipients[2] = payable(user2); // Duplicate
+        recipients[1] = payable(user2); // Duplicate
+        recipients[2] = payable(user3);
         
         uint256[] memory amounts = new uint256[](3);
         amounts[0] = 1000 * 10**18;
-        amounts[1] = 2000 * 10**18;
-        amounts[2] = 500 * 10**18;
+        amounts[1] = 500 * 10**18;
+        amounts[2] = 2000 * 10**18;
         
         address payable[] memory excludedAddresses = new address payable[](0);
         
@@ -125,6 +131,35 @@ contract TokenDistributorTest is Test {
         token.approve(address(distributor), 3500 * 10**18);
         
         // Expect revert on duplicate recipients
+        vm.expectRevert(TokenDistributor.DUPLICATE_RECIPIENT.selector);
+        distributor.splitERC20(
+            IERC20(address(token)),
+            recipients,
+            amounts,
+            excludedAddresses,
+            ""
+        );
+        vm.stopPrank();
+    }
+    
+    // Test for unsorted recipients
+    function testRevertOnUnsortedRecipients() public {
+        // Setup recipients in wrong order (not sorted)
+        address payable[] memory recipients = new address payable[](2);
+        recipients[0] = payable(user3); // Higher address first
+        recipients[1] = payable(user2); // Lower address second
+        
+        uint256[] memory amounts = new uint256[](2);
+        amounts[0] = 1000 * 10**18;
+        amounts[1] = 2000 * 10**18;
+        
+        address payable[] memory excludedAddresses = new address payable[](0);
+        
+        // Approve tokens for distributor
+        vm.startPrank(user1);
+        token.approve(address(distributor), 3000 * 10**18);
+        
+        // Expect revert on unsorted recipients
         vm.expectRevert(TokenDistributor.DUPLICATE_RECIPIENT.selector);
         distributor.splitERC20(
             IERC20(address(token)),
@@ -170,8 +205,8 @@ contract TokenDistributorTest is Test {
     function testRevertOnZeroAddressRecipient() public {
         // Setup recipients with zero address
         address payable[] memory recipients = new address payable[](2);
-        recipients[0] = payable(user2);
-        recipients[1] = payable(address(0)); // Zero address
+        recipients[0] = payable(address(0)); // Zero address
+        recipients[1] = payable(user2);
         
         uint256[] memory amounts = new uint256[](2);
         amounts[0] = 1000 * 10**18;
@@ -389,9 +424,13 @@ contract TokenDistributorTest is Test {
         address payable[] memory recipients = new address payable[](recipientCount);
         uint256[] memory amounts = new uint256[](recipientCount);
         
+        // Create sorted addresses
+        address payable baseAddr = payable(0x1000000000000000000000000000000000000000);
+        
         uint256 totalAmount = 0;
         for (uint256 i = 0; i < recipientCount; i++) {
-            recipients[i] = payable(makeAddr(string(abi.encodePacked("recipient", vm.toString(i)))));
+            // Create addresses in ascending order by adding i to the base address
+            recipients[i] = payable(address(uint160(address(baseAddr)) + uint160(i)));
             amounts[i] = 100 * 10**18;
             totalAmount += amounts[i];
         }
@@ -421,10 +460,55 @@ contract TokenDistributorTest is Test {
         assertEq(token.balanceOf(recipients[recipientCount / 2]), 100 * 10**18);
     }
     
-    // Test with a malicious token that returns false on transfer
+    
+    
+    // Test for direct token recovery
+    function testRecoverDirectlySentTokens() public {
+        // Send tokens directly to the contract (not through splitERC20)
+        uint256 amount = 1000 * 10**18;
+        token.transfer(address(distributor), amount);
+        
+        // Verify initial balances
+        assertEq(token.balanceOf(address(distributor)), amount);
+        uint256 initialOwnerBalance = token.balanceOf(owner);
+        
+        // Withdraw the tokens
+        distributor.withdraw(IERC20(address(token)));
+        
+        // Verify the tokens were recovered
+        assertEq(token.balanceOf(address(distributor)), 0);
+        assertEq(token.balanceOf(owner), initialOwnerBalance + amount);
+    }
+    
+    // Test with a malicious token implementation
     function testMaliciousToken() public {
-        // This would require a custom malicious token implementation
-        // For now, we'll skip this test as it requires additional setup
+        // Deploy a malicious token that returns false on transfers
+        MaliciousToken malToken = new MaliciousToken();
+        malToken.mint(user1, 10000 * 10**18);
+        
+        // Setup recipients and amounts
+        address payable[] memory recipients = new address payable[](1);
+        recipients[0] = payable(user2);
+        
+        uint256[] memory amounts = new uint256[](1);
+        amounts[0] = 1000 * 10**18;
+        
+        address payable[] memory excludedAddresses = new address payable[](0);
+        
+        // Approve tokens for distributor
+        vm.startPrank(user1);
+        malToken.approve(address(distributor), 1000 * 10**18);
+        
+        // Expect revert when transferring malicious tokens
+        vm.expectRevert();
+        distributor.splitERC20(
+            IERC20(address(malToken)),
+            recipients,
+            amounts,
+            excludedAddresses,
+            ""
+        );
+        vm.stopPrank();
     }
     
     // Receive function to handle ETH transfers

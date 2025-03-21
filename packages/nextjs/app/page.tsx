@@ -4,9 +4,11 @@ import Holders from "./_components/holder";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
 import { Address } from "~~/components/scaffold-eth";
+import { useDeployedContractInfo} from "~~/hooks/scaffold-eth";
 
 const Home: NextPage = () => {
   const { address: connectedAddress } = useAccount();
+  const { data: Erc20Mock } = useDeployedContractInfo("ERC20Mock");
 
   return (
     <>
@@ -18,6 +20,8 @@ const Home: NextPage = () => {
           <div className="flex justify-center items-center space-x-2 flex-col sm:flex-row">
             <p className="my-2 font-medium">Connected Address:</p>
             <Address address={connectedAddress} />
+            <p className="my-2 font-medium">ERC20Mock Address:</p>
+            <Address address={Erc20Mock?.address} />
           </div>
         </div>
 
