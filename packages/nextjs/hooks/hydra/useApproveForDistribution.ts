@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { readContract, simulateContract, writeContract } from "@wagmi/core";
+import { readContract, writeContract } from "@wagmi/core";
 import { formatUnits, parseUnits } from "viem";
 import { erc20Abi } from "viem";
 import { useAccount } from "wagmi";
@@ -9,6 +9,20 @@ import { useTargetNetwork } from "~~/hooks/scaffold-eth";
 import { wagmiConfig } from "~~/services/web3/wagmiConfig";
 import { getParsedError } from "~~/utils/scaffold-eth";
 import { notification } from "~~/utils/scaffold-eth";
+
+// Custom ABI for non-standard ERC20 tokens like USDT that don't return a boolean from approve
+const approveAbiNoReturn = [
+  {
+    type: "function",
+    name: "approve",
+    inputs: [
+      { name: "spender", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
+    outputs: [],
+    stateMutability: "nonpayable",
+  },
+] as const;
 
 export const useApproveForDistribution = ({
   tokenAddress,
@@ -46,16 +60,18 @@ export const useApproveForDistribution = ({
 
     if (deployedContract && tokenAddress) {
       const adjustedAmount = amount * 1.000001;
-      const { request } = await simulateContract(wagmiConfig, {
-        address: tokenAddress,
-        abi: erc20Abi,
-        functionName: "approve",
-        args: [deployedContract?.address, parseUnits(adjustedAmount.toString(), tokenDecimals)],
-      });
 
       try {
         setIsMining(true);
-        await writeTx(() => writeContract(wagmiConfig, request));
+        // Use custom ABI that doesn't expect return value to support non-standard tokens like USDT
+        await writeTx(() =>
+          writeContract(wagmiConfig, {
+            address: tokenAddress as `0x${string}`,
+            abi: approveAbiNoReturn,
+            functionName: "approve",
+            args: [deployedContract.address, parseUnits(adjustedAmount.toString(), tokenDecimals)],
+          }),
+        );
         setUpdateAllowance(true);
       } catch (e: any) {
         const message = getParsedError(e);
