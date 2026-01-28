@@ -299,9 +299,22 @@ const TokenData = () => {
                 type="number"
                 value={distributionAmount as string}
                 onChange={e => setDistributionAmount(e.target.value)}
-                className="input input-sm input-ghost focus:outline-none focus:bg-transparent focus:text-gray-400 border font-medium placeholder:text-accent w-2/3 text-gray-400 pr-6 py-2 placeholder:text-xs"
+                className="input input-sm input-ghost focus:outline-none focus:bg-transparent focus:text-gray-400 border font-medium placeholder:text-accent w-1/2 text-gray-400 pr-6 py-2 placeholder:text-xs"
                 placeholder="Total amount to distribute"
               />
+              <button
+                type="button"
+                disabled={!tokenContract || (allowance === undefined && balance === undefined)}
+                className="btn btn-sm btn-ghost w-1/6 font-medium"
+                onClick={() => {
+                  const maxAmount = Math.min(allowance ?? 0, balance ?? 0);
+                  if (maxAmount > 0) {
+                    setDistributionAmount(maxAmount.toString());
+                  }
+                }}
+              >
+                Max
+              </button>
               <button
                 type="button"
                 disabled={!tokenContract || !distributionAmount}

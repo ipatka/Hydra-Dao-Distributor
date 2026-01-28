@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { readContract, simulateContract, writeContract } from "@wagmi/core";
-import { formatEther, formatUnits, parseUnits } from "viem";
+import { formatUnits, parseUnits } from "viem";
 import { erc20Abi } from "viem";
 import { useAccount } from "wagmi";
 import { useTransactor } from "~~/hooks/scaffold-eth";
@@ -75,13 +75,20 @@ export const useApproveForDistribution = ({
         setAllowance(undefined);
         setIsLoading(true);
         try {
+          // Fetch decimals first to ensure we format correctly
+          const decimals = await readContract(wagmiConfig, {
+            address: tokenAddress,
+            abi: erc20Abi,
+            functionName: "decimals",
+          });
+
           const data = await readContract(wagmiConfig, {
             address: tokenAddress,
             abi: erc20Abi,
             functionName: "allowance",
             args: [address, deployedContract.address],
           });
-          setAllowance(parseFloat(formatEther(data)));
+          setAllowance(parseFloat(formatUnits(data, decimals)));
         } catch (error) {
           setAllowance(undefined);
         }
